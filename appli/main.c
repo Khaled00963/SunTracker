@@ -53,6 +53,8 @@ int main(void)
 
 	//On ajoute la fonction process_ms à la liste des fonctions appelées automatiquement chaque ms par la routine d'interruption du périphérique SYSTICK
 	Systick_add_callback_function(&process_ms);
+	
+	//khaled
 
 	while(1)	//boucle de tâche de fond
 	{
