@@ -141,6 +141,9 @@ void calibrate() {
 	adjustServos(horizontalAngle, verticalAngle);
 }
 
+
+//toto
+
 void trackSun() {
 	// Read photo cell values
 	int photocell0 = ADC_getValue(PHOTOCELL_0);
