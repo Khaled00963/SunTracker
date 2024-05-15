@@ -69,7 +69,7 @@
 	//16 entrées analogiques peuvent être activées maximum.
 	//2 entrées analogiques doivent être activées minimum. (Vref est un choix possible si vous utilisez une seule entrée)
 	#define USE_AN0			1	//Broche correspondante : PA0
-	#define USE_AN1			0	//Broche correspondante : PA1
+	#define USE_AN1			1	//Broche correspondante : PA1
 	#define USE_AN2			0	//Broche correspondante : PA2	//Sur la Nucleo, cette broche n'est pas câblée !
 	#define USE_AN3			0	//Broche correspondante : PA3	//Sur la Nucleo, cette broche n'est pas câblée !
 	#define USE_AN4			0	//Broche correspondante : PA4
@@ -77,7 +77,7 @@
 	#define USE_AN6			0	//Broche correspondante : PA6
 	#define USE_AN7			0	//Broche correspondante : PA7
 	#define USE_AN8			1	//Broche correspondante : PB0
-	#define USE_AN9			0	//Broche correspondante : PB1
+	#define USE_AN9			1	//Broche correspondante : PB1
 	#define USE_AN10		0	//Broche correspondante : PC0	//Sur la Bluepill, cette broche n'est pas câblée !
 	#define USE_AN11		0	//Broche correspondante : PC1	//Sur la Bluepill, cette broche n'est pas câblée !
 	#define USE_AN12		0	//Broche correspondante : PC2	//Sur la Bluepill, cette broche n'est pas câblée !
