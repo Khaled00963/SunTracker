@@ -90,7 +90,7 @@
 
 #define USE_SCREEN_TFT_ILI9341		1	//Ecran TFT 2.4
 	#if USE_SCREEN_TFT_ILI9341
-		#define USE_XPT2046			1	//Tactile
+		#define USE_XPT2046			0	//Tactile
 
 		#define USE_FONT11x18		1
 		#define USE_FONT7x10		0

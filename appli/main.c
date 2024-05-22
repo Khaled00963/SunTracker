@@ -49,7 +49,7 @@
 		INIT,
 		CALIBRATE,
 		TRACK_SUN,
-		STANDBY
+		DARK_MODE
 	} State;
 
 	// Affichage
@@ -108,7 +108,7 @@ int main(void)
 	{
 		//TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
 		//sweepArea(HORIZONTAL_MIN_ANGLE, HORIZONTAL_MAX_ANGLE, 100);
-		SUNBED_state_machine();
+		//SUNBED_state_machine();
 
 	}
 }
@@ -147,7 +147,7 @@ void initialize()
 	init_screen();
 
 	// Start calibration
-	currentState = CALIBRATE;
+	//currentState = CALIBRATE;
 }
 
 void calibrate() {
@@ -236,7 +236,7 @@ static void SUNBED_state_machine(void)
 	  case TRACK_SUN:
 		trackSun();
 		break;
-	  case STANDBY:
+	  case DARK_MODE:
 
 	  	break;
 	}
@@ -275,7 +275,7 @@ void SUNBED_display(message_id_e message_id)
 			printf("Hello world");
 
 			ILI9341_DrawLine(20,20,20,100,ILI9341_COLOR_RED);
-			ILI9341_Putc(20,20,'Hi',&Font_11x18,ILI9341_COLOR_BLUE,ILI9341_COLOR_GREEN);
+			ILI9341_Puts(20,20,'Hi',&Font_11x18,ILI9341_COLOR_BLUE,ILI9341_COLOR_GREEN);
 			break;
 		case MESSAGE_PARAMETERS:
 			// TODO

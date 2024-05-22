@@ -150,7 +150,7 @@ VCC          3.3V         Positive power supply
  */
 #ifndef ILI9341_CS_PIN
 #define ILI9341_CS_PORT       GPIOA
-#define ILI9341_CS_PIN        GPIO_PIN_12
+#define ILI9341_CS_PIN        GPIO_PIN_11 // GPIO_PIN_12
 #endif
 
 /**
@@ -215,7 +215,7 @@ VCC          3.3V         Positive power supply
  *
  * 		O_____________O						* * * * * * * <-- pins
  * 		|             |						O-------------O
- * 		| °-----> x   |						| °-----> x   |
+ * 		| ï¿½-----> x   |						| ï¿½-----> x   |
  * 		| |           |						| |           |
  * 		| |           |						| |           |
  * 		| !           |						| !           |
@@ -232,7 +232,7 @@ VCC          3.3V         Positive power supply
  *
  *
  * 		 O_______________________O *		 *	O_______________________O
- * 		 | °-----> x      		 | *		 *	| °-----> x      		|
+ * 		 | ï¿½-----> x      		 | *		 *	| ï¿½-----> x      		|
  * 		 | |			   		 | *		 *	| |			   		 	|
  * 		 | |           		  	 | *		 *	| |			   			|
  * 		 | !           		  	 | *		 *	| !           		  	|
