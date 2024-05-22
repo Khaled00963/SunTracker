@@ -6,17 +6,17 @@
   * @brief   Default main function.
   ******************************************************************************
 
-	/*
+/*
    ______               _                  _///_ _           _                   _
   /   _  \             (_)                |  ___| |         | |                 (_)
   |  [_|  |__  ___  ___ _  ___  _ __      | |__ | | ___  ___| |_ _ __ ___  _ __  _  ___  _   _  ___
   |   ___/ _ \| __|| __| |/ _ \| '_ \_____|  __|| |/ _ \/  _|  _| '__/   \| '_ \| |/   \| | | |/ _ \
   |  |  | ( ) |__ ||__ | | ( ) | | | |____| |__ | |  __/| (_| |_| | | (_) | | | | | (_) | |_| |  __/
   \__|   \__,_|___||___|_|\___/|_| [_|    \____/|_|\___|\____\__\_|  \___/|_| |_|_|\__  |\__,_|\___|
-                                                                                      | |
-                                                                                      \_|
+                                                                                      | |                                                                                  \_|
 
 */
+
 #include "stm32f1xx_hal.h"
 #include "stm32f1_uart.h"
 #include "stm32f1_sys.h"
@@ -25,6 +25,9 @@
 #include "systick.h"
 #include "stm32f1_timer.h"
 #include "stm32f1xx.h"
+#include "tft_ili9341.h"
+
+
 
 // Pin definitions
 #define SERVO_HORIZONTAL TIM_CHANNEL_2 // A9
@@ -43,9 +46,9 @@
 // State definitions
 	typedef enum
 	{
-	  IDLE,
-	  CALIBRATE,
-	  TRACK_SUN
+		INIT,
+		CALIBRATE,
+		TRACK_SUN
 	} State;
 
 /**
@@ -69,6 +72,7 @@ int constrain(int value, int min, int max) {
 
 // Function prototypes
 void initialize();
+void ihm_tft();
 void calibrate();
 void trackSun();
 void sweepArea(int startAngle, int endAngle, int stepDelay);
@@ -79,16 +83,16 @@ void adjustServos(int horizontalAngle, int verticalAngle);
 TIM_HandleTypeDef htim_servo;
 ADC_HandleTypeDef hadc;
 
-State currentState = IDLE;
+State currentState = INIT;
 uint16_t horizontalAngle = 150; // Initial horizontal angle
 uint16_t verticalAngle = 150;   // Initial vertical angle
 
 int main(void)
 {
-	//Initialisation de la couche logicielle HAL (Hardware Abstraction Layer)
-	//Cette ligne doit rester la premiÃ¨re Ã©tape de la fonction main().
-	HAL_Init();
 	initialize();
+
+	ihm_tft();
+
 	while (1)
 	{
 		//TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
@@ -97,7 +101,7 @@ int main(void)
 	}
 }
 
-
+/*
 void sweepArea(int startAngle, int endAngle, int stepDelay) {
   int angle;
 
@@ -112,11 +116,15 @@ void sweepArea(int startAngle, int endAngle, int stepDelay) {
 	TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, angle);
     HAL_Delay(stepDelay);
   }
-}
+}*/
 
 
 void initialize()
 {
+	//Initialisation de la couche logicielle HAL (Hardware Abstraction Layer)
+	//Cette ligne doit rester la premiÃ¨re Ã©tape de la fonction main().
+	HAL_Init();
+
 	ADC_init();
 	//Initialisation de l'UART2 Ã  la vitesse de 115200 bauds/secondes (92kbits/s) PA2 : Tx  | PA3 : Rx.
 	//Attention, les pins PA2 et PA3 ne sont pas reliÃ©es jusqu'au connecteur de la Nucleo.
@@ -142,6 +150,8 @@ void initialize()
 	TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
 	TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, verticalAngle);
 
+	init_screen();
+
 	// Start calibration
 	currentState = CALIBRATE;
 }
@@ -150,26 +160,7 @@ void calibrate() {
 	// Perform calibration routine
 	// Adjust servos to their starting positions
 	adjustServos(horizontalAngle, verticalAngle);
-}
-
-
-//toto
-
-void trackSun() {
-	// Read photo cell values
-	int photocell0 = ADC_getValue(PHOTOCELL_0);
-	int photocell1 = ADC_getValue(PHOTOCELL_1);
-	int photocell2 = ADC_getValue(PHOTOCELL_2);
-	int photocell3 = ADC_getValue(PHOTOCELL_3);
-	// Determine servo adjustments based on photo cell readings
-	// Calculate the difference between pairs of photocells
-	int deltX = photocell0 - photocell2; //x
-	int deltY = photocell1 - photocell3; //y
-
-	int average = (photocell0 + photocell1 + photocell2 + photocell3)/4;
-
-	// Adjust servos
-	adjustServos(deltX, deltY);
+	currentState = TRACK_SUN;
 }
 
 void adjustServos(int deltaX, int deltaY)
@@ -220,19 +211,80 @@ void adjustServos(int deltaX, int deltaY)
 	}
 }
 
+void trackSun() {
+	// Read photo cell values
+	int photocell0 = ADC_getValue(PHOTOCELL_0);
+	int photocell1 = ADC_getValue(PHOTOCELL_1);
+	int photocell2 = ADC_getValue(PHOTOCELL_2);
+	int photocell3 = ADC_getValue(PHOTOCELL_3);
+	// Determine servo adjustments based on photo cell readings
+	// Calculate the difference between pairs of photocells
+	int deltX = photocell0 - photocell2; //x
+	int deltY = photocell1 - photocell3; //y
+
+	int average = (photocell0 + photocell1 + photocell2 + photocell3)/4;
+
+	// Adjust servos
+	adjustServos(deltX, deltY);
+}
+
+void ihm_tft()
+{
+	draw_full_circle();
+	draw_cross();
+
+	// Affiche les valeurs des photorésistances à des positions spécifiques
+	draw_value(50, 50, photoresistor_value_1);
+	draw_value(190, 50, photoresistor_value_2);
+	draw_value(50, 210, photoresistor_value_3);
+	draw_value(190, 210, photoresistor_value_4);
+}
+
+// Initialisation de l'écran TFT
+void init_screen()
+{
+	ILI9341_Init();
+	ILI9341_Fill(ILI9341_COLOR_WHITE);
+}
+
+ // Affichage d'un grand cercle void
+void draw_full_circle()
+{
+	int radius = 110; // Rayon du cercle (110 pixels pour un écran de 240x320)
+	ILI9341_DrawCircle(120, 160, radius, ILI9341_COLOR_BLUE);
+}
+
+// Affichage d'une croix qui découpe le cercle en 4 parties égales
+void draw_x_cross()
+{
+	ILI9341_DrawLine(120 - 110, 160 - 110, 120 + 110, 160 + 110, ILI9341_COLOR_RED);
+	ILI9341_DrawLine(120 - 110, 160 + 110, 120 + 110, 160 - 110, ILI9341_COLOR_RED);
+}
+
+// Affichage d'une valeur numérique à une position donnée
+void draw_value(int x, int y, int value)
+{
+	char buffer[10];
+	sprintf(buffer, "%d", value);
+	ILI9341_Puts(x, y, buffer, &Font_11x18, ILI9341_COLOR_BLACK, ILI9341_COLOR_WHITE);
+}
+
+// Fonction principale de la machine à état
 static void SUNBED_state_machine(void)
 {
 	switch(currentState)
 	{
-	  case IDLE:
-		// Do nothing until calibrated
+	  case INIT:
 		break;
 	  case CALIBRATE:
-		//calibrate();
+		calibrate();
 		currentState = TRACK_SUN;
 		break;
 	  case TRACK_SUN:
 		trackSun();
+		break;
+	  case TFT:
+
 		break;
 	}
 }
