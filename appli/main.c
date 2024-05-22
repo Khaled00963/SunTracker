@@ -25,8 +25,7 @@
 #include "systick.h"
 #include "stm32f1_timer.h"
 #include "stm32f1xx.h"
-#include "tft_ili9341.h"
-
+#include "tft_ili9341/stm32f1_ili9341.h"
 
 
 // Pin definitions
@@ -43,20 +42,31 @@
 #define VERTICAL_MIN_ANGLE 0//-90
 #define VERTICAL_MAX_ANGLE 90
 
-// State definitions
+// States definitions
+	// Track
 	typedef enum
 	{
 		INIT,
 		CALIBRATE,
-		TRACK_SUN
+		TRACK_SUN,
+		STANDBY
 	} State;
+
+	// Affichage
+	typedef enum{
+		MESSAGE_WELCOME,
+		MESSAGE_PARAMETERS,
+		MESSAGE_THANKS
+	} message_id_e;
 
 /**
  *  Par exemple, si vous avez un capteur de lumière qui renvoie des valeurs analogiques de 0 à 1023,
  *  mais vous voulez utiliser ces valeurs pour contrôler un servomoteur qui fonctionne dans une plage d'angles de 0 à 180 degrés,
  *  vous devrez mapper les valeurs du capteur aux valeurs des angles du servomoteur.
  */
-/*int map(int x, int in_min, int in_max, int out_min, int out_max) {
+
+/*
+  int map(int x, int in_min, int in_max, int out_min, int out_max) {
   return (((x - in_min) * (out_max - out_min)) / (in_max - in_min)) + out_min;
 }
 
@@ -68,7 +78,8 @@ int constrain(int value, int min, int max) {
   } else {
     return value;
   }
-}*/
+}
+*/
 
 // Function prototypes
 void initialize();
@@ -77,6 +88,7 @@ void calibrate();
 void trackSun();
 void sweepArea(int startAngle, int endAngle, int stepDelay);
 static void SUNBED_state_machine(void);
+static void SUNBED_display(message_id_e message_id);
 void adjustServos(int horizontalAngle, int verticalAngle);
 
 // Global variables
@@ -90,34 +102,16 @@ uint16_t verticalAngle = 150;   // Initial vertical angle
 int main(void)
 {
 	initialize();
-
-	ihm_tft();
+	SUNBED_display(MESSAGE_WELCOME);
 
 	while (1)
 	{
 		//TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
 		//sweepArea(HORIZONTAL_MIN_ANGLE, HORIZONTAL_MAX_ANGLE, 100);
 		SUNBED_state_machine();
+
 	}
 }
-
-/*
-void sweepArea(int startAngle, int endAngle, int stepDelay) {
-  int angle;
-
-  // Sweep from start angle to end angle
-  for (angle = startAngle; angle <= endAngle; angle++) {
-	TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, angle);
-    HAL_Delay(stepDelay);
-  }
-  HAL_Delay(1000);
-  // Sweep back from end angle to start angle
-  for (angle = endAngle; angle >= startAngle; angle--) {
-	TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, angle);
-    HAL_Delay(stepDelay);
-  }
-}*/
-
 
 void initialize()
 {
@@ -228,47 +222,6 @@ void trackSun() {
 	adjustServos(deltX, deltY);
 }
 
-void ihm_tft()
-{
-	draw_full_circle();
-	draw_cross();
-
-	// Affiche les valeurs des photorésistances à des positions spécifiques
-	draw_value(50, 50, photoresistor_value_1);
-	draw_value(190, 50, photoresistor_value_2);
-	draw_value(50, 210, photoresistor_value_3);
-	draw_value(190, 210, photoresistor_value_4);
-}
-
-// Initialisation de l'écran TFT
-void init_screen()
-{
-	ILI9341_Init();
-	ILI9341_Fill(ILI9341_COLOR_WHITE);
-}
-
- // Affichage d'un grand cercle void
-void draw_full_circle()
-{
-	int radius = 110; // Rayon du cercle (110 pixels pour un écran de 240x320)
-	ILI9341_DrawCircle(120, 160, radius, ILI9341_COLOR_BLUE);
-}
-
-// Affichage d'une croix qui découpe le cercle en 4 parties égales
-void draw_x_cross()
-{
-	ILI9341_DrawLine(120 - 110, 160 - 110, 120 + 110, 160 + 110, ILI9341_COLOR_RED);
-	ILI9341_DrawLine(120 - 110, 160 + 110, 120 + 110, 160 - 110, ILI9341_COLOR_RED);
-}
-
-// Affichage d'une valeur numérique à une position donnée
-void draw_value(int x, int y, int value)
-{
-	char buffer[10];
-	sprintf(buffer, "%d", value);
-	ILI9341_Puts(x, y, buffer, &Font_11x18, ILI9341_COLOR_BLACK, ILI9341_COLOR_WHITE);
-}
-
 // Fonction principale de la machine à état
 static void SUNBED_state_machine(void)
 {
@@ -283,33 +236,61 @@ static void SUNBED_state_machine(void)
 	  case TRACK_SUN:
 		trackSun();
 		break;
-	  case TFT:
+	  case STANDBY:
 
-		break;
+	  	break;
 	}
 }
 
-/*void SUNBED_display(message_id_e message_id)
+void ihm_tft()
 {
-	typedef enum{
-		MESSAGE_WELCOME,
-		MESSAGE_PARAMETERS,
-		MESSAGE_THANKS
-	}message_id_e;
+	//draw_full_circle();
+	//draw_cross();
+
+	// Affiche les valeurs des photorésistances à des positions spécifiques
+	//draw_value(50, 50, photoresistor_value_1);
+	//draw_value(190, 50, photoresistor_value_2);
+	//draw_value(50, 210, photoresistor_value_3);
+	//draw_value(190, 210, photoresistor_value_4);
+}
+
+// Initialisation de l'écran TFT
+void init_screen()
+{
+	ILI9341_Init();
+	//ILI9341_DisplayOn();
+	ILI9341_Fill(ILI9341_COLOR_YELLOW);
+}
+
+//ILI9341_DrawRectangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
+//draw_value(int x, int y, int value);
+//ILI9341_DrawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
+
+
+void SUNBED_display(message_id_e message_id)
+{
 	switch(message_id)
 	{
 		case MESSAGE_WELCOME:
 			printf("Hello world");
+
+			ILI9341_DrawLine(20,20,20,100,ILI9341_COLOR_RED);
+			ILI9341_Putc(20,20,'Hi',&Font_11x18,ILI9341_COLOR_BLUE,ILI9341_COLOR_GREEN);
 			break;
 		case MESSAGE_PARAMETERS:
-			//TODO
+			// TODO
 
 			break;
 		case MESSAGE_THANKS:
 			printf("Bye bye ...");
+
+			ILI9341_DrawLine(20,20,20,100,ILI9341_COLOR_RED);
+			ILI9341_Putc(130,11,'Bye',&Font_11x18,ILI9341_COLOR_BLUE,ILI9341_COLOR_WHITE);
 			break;
 		default:
 			printf("You must define the content for the case %d\n", message_id);
+			ILI9341_DrawLine(20,20,20,100,ILI9341_COLOR_RED);
+			ILI9341_Putc(130,11,'case ?',&Font_11x18,ILI9341_COLOR_BLUE,ILI9341_COLOR_WHITE);
 			break;
 	}
-}*/
+}
