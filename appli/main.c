@@ -5,6 +5,17 @@
   * @date    03-July-2019
   * @brief   Default main function.
   ******************************************************************************
+
+	/*
+   ______               _                  _///_ _           _                   _
+  /   _  \             (_)                |  ___| |         | |                 (_)
+  |  [_|  |__  ___  ___ _  ___  _ __      | |__ | | ___  ___| |_ _ __ ___  _ __  _  ___  _   _  ___
+  |   ___/ _ \| __|| __| |/ _ \| '_ \_____|  __|| |/ _ \/  _|  _| '__/   \| '_ \| |/   \| | | |/ _ \
+  |  |  | ( ) |__ ||__ | | ( ) | | | |____| |__ | |  __/| (_| |_| | | (_) | | | | | (_) | |_| |  __/
+  \__|   \__,_|___||___|_|\___/|_| [_|    \____/|_|\___|\____\__\_|  \___/|_| |_|_|\__  |\__,_|\___|
+                                                                                      | |
+                                                                                      \_|
+
 */
 #include "stm32f1xx_hal.h"
 #include "stm32f1_uart.h"
@@ -42,7 +53,7 @@
  *  mais vous voulez utiliser ces valeurs pour contrôler un servomoteur qui fonctionne dans une plage d'angles de 0 à 180 degrés,
  *  vous devrez mapper les valeurs du capteur aux valeurs des angles du servomoteur.
  */
-int map(int x, int in_min, int in_max, int out_min, int out_max) {
+/*int map(int x, int in_min, int in_max, int out_min, int out_max) {
   return (((x - in_min) * (out_max - out_min)) / (in_max - in_min)) + out_min;
 }
 
@@ -54,7 +65,7 @@ int constrain(int value, int min, int max) {
   } else {
     return value;
   }
-}
+}*/
 
 // Function prototypes
 void initialize();
@@ -69,8 +80,8 @@ TIM_HandleTypeDef htim_servo;
 ADC_HandleTypeDef hadc;
 
 State currentState = IDLE;
-uint16_t horizontalAngle = 200; // Initial horizontal angle
-uint16_t verticalAngle = 0;   // Initial vertical angle
+uint16_t horizontalAngle = 150; // Initial horizontal angle
+uint16_t verticalAngle = 150;   // Initial vertical angle
 
 int main(void)
 {
@@ -128,8 +139,8 @@ void initialize()
 	TIMER_enable_PWM(TIMER1_ID, SERVO_VERTICAL, verticalAngle, FALSE, FALSE);
 
 	// Mise Ã  jour du rapport cyclique.
-	//TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
-	//TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, verticalAngle);
+	TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
+	TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, verticalAngle);
 
 	// Start calibration
 	currentState = CALIBRATE;
@@ -154,6 +165,8 @@ void trackSun() {
 	// Calculate the difference between pairs of photocells
 	int deltX = photocell0 - photocell2; //x
 	int deltY = photocell1 - photocell3; //y
+
+	int average = (photocell0 + photocell1 + photocell2 + photocell3)/4;
 
 	// Adjust servos
 	adjustServos(deltX, deltY);
