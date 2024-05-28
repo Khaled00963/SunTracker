@@ -96,20 +96,27 @@ TIM_HandleTypeDef htim_servo;
 ADC_HandleTypeDef hadc;
 
 State currentState = INIT;
-uint16_t horizontalAngle = 150; // Initial horizontal angle
-uint16_t verticalAngle = 150;   // Initial vertical angle
+uint16_t horizontalAngle = 115; //min = 25, centre = 115, max = 220 // Initial horizontal angle
+uint16_t verticalAngle = 190;   //min= 130, centre = 190, max = 250 // Initial vertical angle
+
 
 int main(void)
 {
 	initialize();
-	SUNBED_display(MESSAGE_WELCOME);
+
+
+	//SUNBED_display(MESSAGE_WELCOME);
 
 	while (1)
 	{
 		//TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
 		//sweepArea(HORIZONTAL_MIN_ANGLE, HORIZONTAL_MAX_ANGLE, 100);
 		//SUNBED_state_machine();
-
+//		ILI9341_demo();
+//		ILI9341_DrawLine(20,20,20,100,ILI9341_COLOR_RED);
+//		ILI9341_DrawCircle(50, 50, 80, ILI9341_COLOR_RED);
+//		ILI9341_Puts(20,20,'Hi',&Font_11x18,ILI9341_COLOR_BLUE,ILI9341_COLOR_GREEN);
+//		ILI9341_Putc(20,20,'Hiii',&Font_11x18,ILI9341_COLOR_BLUE,ILI9341_COLOR_GREEN);
 	}
 }
 
@@ -141,13 +148,13 @@ void initialize()
 	TIMER_enable_PWM(TIMER1_ID, SERVO_VERTICAL, verticalAngle, FALSE, FALSE);
 
 	// Mise Ã  jour du rapport cyclique.
-	TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
-	TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, verticalAngle);
+	//TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
+	//TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, verticalAngle);
 
 	init_screen();
 
 	// Start calibration
-	//currentState = CALIBRATE;
+	currentState = CALIBRATE;
 }
 
 void calibrate() {
