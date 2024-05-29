@@ -37,15 +37,14 @@
 #define PHOTOCELL_3 ADC_CHANNEL_9 // B1
 
 // Servo angle limits
-#define HORIZONTAL_MIN_ANGLE 0//-120
-#define HORIZONTAL_MAX_ANGLE 360
-#define VERTICAL_MIN_ANGLE 0//-90
-#define VERTICAL_MAX_ANGLE 90
+#define HORIZONTAL_MIN_ANGLE 25
+#define HORIZONTAL_MAX_ANGLE 220
+#define VERTICAL_MIN_ANGLE 130
+#define VERTICAL_MAX_ANGLE 250
 
 // States definitions
 	// Track
-	typedef enum
-	{
+	typedef enum{
 		INIT,
 		CALIBRATE,
 		TRACK_SUN,
@@ -111,7 +110,7 @@ int main(void)
 	{
 		//TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
 		//sweepArea(HORIZONTAL_MIN_ANGLE, HORIZONTAL_MAX_ANGLE, 100);
-		//SUNBED_state_machine();
+		SUNBED_state_machine();
 //		ILI9341_demo();
 //		ILI9341_DrawLine(20,20,20,100,ILI9341_COLOR_RED);
 //		ILI9341_DrawCircle(50, 50, 80, ILI9341_COLOR_RED);
@@ -171,19 +170,21 @@ void adjustServos(int deltaX, int deltaY)
 
 	if (deltaX > sensibilite)//plus la valeur est petite plus la précision est grande.
 	{
-		TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, pos++);
+
 		if (pos > HORIZONTAL_MAX_ANGLE)
 		{
 			pos = HORIZONTAL_MAX_ANGLE;
 		}
+		TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, pos);
 	}
 	else if (deltaX < -sensibilite)
 	{
-		TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, pos--);
+
 		if (pos < HORIZONTAL_MIN_ANGLE)
 		{
 			pos = HORIZONTAL_MIN_ANGLE;
 		}
+		TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, pos);
 	}
 	else
 	{
@@ -192,19 +193,21 @@ void adjustServos(int deltaX, int deltaY)
 
 	if (deltaY > sensibilite)//plus la valeur est petite plus la précision est grande.
 	{
-		TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, pos++);
+
 		if (pos > VERTICAL_MAX_ANGLE)
 		{
 			pos = VERTICAL_MAX_ANGLE;
 		}
+		TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, pos);
 	}
 	else if (deltaY < -sensibilite)
 	{
-		TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, pos--);
+
 		if (pos < VERTICAL_MIN_ANGLE)
 		{
 			pos = VERTICAL_MIN_ANGLE;
 		}
+		TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, pos);
 	}
 	else
 	{
@@ -225,6 +228,8 @@ void trackSun() {
 
 	int average = (photocell0 + photocell1 + photocell2 + photocell3)/4;
 
+	snprintf("pc0:      %11.5lf,    pc2:   %11.5lf\n", photocell0, photocell2);
+	snprintf("pc1:   %11.5lf,    pc3:  %11.5lf\n", photocell1, photocell3);
 	// Adjust servos
 	adjustServos(deltX, deltY);
 }
@@ -237,7 +242,7 @@ static void SUNBED_state_machine(void)
 	  case INIT:
 		break;
 	  case CALIBRATE:
-		calibrate();
+		//calibrate();
 		currentState = TRACK_SUN;
 		break;
 	  case TRACK_SUN:
