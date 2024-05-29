@@ -95,8 +95,8 @@ TIM_HandleTypeDef htim_servo;
 ADC_HandleTypeDef hadc;
 
 State currentState = INIT;
-uint16_t horizontalAngle = 115; //min = 25, centre = 115, max = 220 // Initial horizontal angle
-uint16_t verticalAngle = 190;   //min= 130, centre = 190, max = 250 // Initial vertical angle
+uint16_t posHorizontal = 115; //min = 25, centre = 115, max = 220 // Initial horizontal angle
+uint16_t posVertical = 190;   //min= 130, centre = 190, max = 250 // Initial vertical angle
 
 
 int main(void)
@@ -143,8 +143,8 @@ void initialize()
 	TIMER_run_us(TIMER1_ID, 10000, FALSE); //10000us = 10ms
 
 	//activation du signal PWM sur le canal 2 et 3 du timer 1 (A9, A10)
-	TIMER_enable_PWM(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle, FALSE, FALSE);
-	TIMER_enable_PWM(TIMER1_ID, SERVO_VERTICAL, verticalAngle, FALSE, FALSE);
+	TIMER_enable_PWM(TIMER1_ID, SERVO_HORIZONTAL, posHorizontal, FALSE, FALSE);
+	TIMER_enable_PWM(TIMER1_ID, SERVO_VERTICAL, posVertical, FALSE, FALSE);
 
 	// Mise Ã  jour du rapport cyclique.
 	//TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
@@ -159,60 +159,61 @@ void initialize()
 void calibrate() {
 	// Perform calibration routine
 	// Adjust servos to their starting positions
-	adjustServos(horizontalAngle, verticalAngle);
+	adjustServos(posHorizontal, posVertical);
 	currentState = TRACK_SUN;
 }
 
-void adjustServos(int deltaX, int deltaY)
-{
-	int sensibilite = 500;
-	int pos;
+// Fonction pour ajuster les servos
+void adjustServos(int deltaX, int deltaY) {
+    int sensibilite = 500;
 
-	if (deltaX > sensibilite)//plus la valeur est petite plus la précision est grande.
-	{
+    // Ajustement du servo horizontal
+    if (deltaX > sensibilite)
+    {
+        posHorizontal++; // Augmente la position horizontale
+        if (posHorizontal > HORIZONTAL_MAX_ANGLE)
+        {
+            posHorizontal = HORIZONTAL_MAX_ANGLE;
+        }
+        TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, posHorizontal);
+    }
+    else if (deltaX < -sensibilite)
+    {
+        posHorizontal--; // Diminue la position horizontale
+        if (posHorizontal < HORIZONTAL_MIN_ANGLE)
+        {
+            posHorizontal = HORIZONTAL_MIN_ANGLE;
+        }
+        TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, posHorizontal);
+    }
+    else
+    {
+        // Rien à faire
+    }
 
-		if (pos > HORIZONTAL_MAX_ANGLE)
-		{
-			pos = HORIZONTAL_MAX_ANGLE;
-		}
-		TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, pos);
-	}
-	else if (deltaX < -sensibilite)
-	{
-
-		if (pos < HORIZONTAL_MIN_ANGLE)
-		{
-			pos = HORIZONTAL_MIN_ANGLE;
-		}
-		TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, pos);
-	}
-	else
-	{
-		//rien
-	}
-
-	if (deltaY > sensibilite)//plus la valeur est petite plus la précision est grande.
-	{
-
-		if (pos > VERTICAL_MAX_ANGLE)
-		{
-			pos = VERTICAL_MAX_ANGLE;
-		}
-		TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, pos);
-	}
-	else if (deltaY < -sensibilite)
-	{
-
-		if (pos < VERTICAL_MIN_ANGLE)
-		{
-			pos = VERTICAL_MIN_ANGLE;
-		}
-		TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, pos);
-	}
-	else
-	{
-		//rien
-	}
+    // Ajustement du servo vertical
+    if (deltaY > sensibilite)
+    {
+        posVertical++; // Augmente la position verticale
+        if (posVertical > VERTICAL_MAX_ANGLE)
+        {
+            posVertical = VERTICAL_MAX_ANGLE;
+        }
+        TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, posVertical);
+    }
+    else if (deltaY < -sensibilite)
+    {
+        posVertical--; // Diminue la position verticale
+        if (posVertical < VERTICAL_MIN_ANGLE)
+        {
+            posVertical = VERTICAL_MIN_ANGLE;
+        }
+        TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, posVertical);
+    }
+    else
+    {
+        // Rien à faire
+    }
 }
 
 void trackSun() {
