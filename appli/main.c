@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
   * @file    main.c
-  * @author  Nirgal
-  * @date    03-July-2019
+  * @author  Khaled
+  * @date    29-May-2024
   * @brief   Default main function.
   ******************************************************************************
 
@@ -42,6 +42,8 @@
 #define VERTICAL_MIN_ANGLE 130
 #define VERTICAL_MAX_ANGLE 250
 
+#define LIMITE_DARK_MODE 100
+
 // States definitions
 	// Track
 	typedef enum{
@@ -58,27 +60,6 @@
 		MESSAGE_THANKS
 	} message_id_e;
 
-/**
- *  Par exemple, si vous avez un capteur de lumière qui renvoie des valeurs analogiques de 0 à 1023,
- *  mais vous voulez utiliser ces valeurs pour contrôler un servomoteur qui fonctionne dans une plage d'angles de 0 à 180 degrés,
- *  vous devrez mapper les valeurs du capteur aux valeurs des angles du servomoteur.
- */
-
-/*
-  int map(int x, int in_min, int in_max, int out_min, int out_max) {
-  return (((x - in_min) * (out_max - out_min)) / (in_max - in_min)) + out_min;
-}
-
-int constrain(int value, int min, int max) {
-  if (value <= min) {
-    return min;
-  } else if (value >= max) {
-    return max;
-  } else {
-    return value;
-  }
-}
-*/
 
 // Function prototypes
 void initialize();
@@ -89,6 +70,7 @@ void sweepArea(int startAngle, int endAngle, int stepDelay);
 static void SUNBED_state_machine(void);
 static void SUNBED_display(message_id_e message_id);
 void adjustServos(int horizontalAngle, int verticalAngle);
+void darkMode(void);
 
 // Global variables
 TIM_HandleTypeDef htim_servo;
@@ -103,13 +85,10 @@ int main(void)
 {
 	initialize();
 
-
 	//SUNBED_display(MESSAGE_WELCOME);
 
 	while (1)
 	{
-		//TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
-		//sweepArea(HORIZONTAL_MIN_ANGLE, HORIZONTAL_MAX_ANGLE, 100);
 		SUNBED_state_machine();
 //		ILI9341_demo();
 //		ILI9341_DrawLine(20,20,20,100,ILI9341_COLOR_RED);
@@ -156,7 +135,8 @@ void initialize()
 	currentState = CALIBRATE;
 }
 
-void calibrate() {
+void calibrate()
+{
 	// Perform calibration routine
 	// Adjust servos to their starting positions
 	adjustServos(posHorizontal, posVertical);
@@ -164,14 +144,16 @@ void calibrate() {
 }
 
 // Fonction pour ajuster les servos
-void adjustServos(int deltaX, int deltaY) {
+void adjustServos(int deltaX, int deltaY)
+{
     int sensibilite = 500;
 
     // Ajustement du servo horizontal
     if (deltaX > sensibilite)
     {
         posHorizontal++; // Augmente la position horizontale
-        if (posHorizontal > HORIZONTAL_MAX_ANGLE)
+    	//posHorizontal = posHorizontal + 10;
+    	if (posHorizontal > HORIZONTAL_MAX_ANGLE)
         {
             posHorizontal = HORIZONTAL_MAX_ANGLE;
         }
@@ -180,6 +162,7 @@ void adjustServos(int deltaX, int deltaY) {
     else if (deltaX < -sensibilite)
     {
         posHorizontal--; // Diminue la position horizontale
+        //posHorizontal = posHorizontal - 10;
         if (posHorizontal < HORIZONTAL_MIN_ANGLE)
         {
             posHorizontal = HORIZONTAL_MIN_ANGLE;
@@ -195,6 +178,7 @@ void adjustServos(int deltaX, int deltaY) {
     if (deltaY > sensibilite)
     {
         posVertical++; // Augmente la position verticale
+    	//posVertical = posVertical + 10;
         if (posVertical > VERTICAL_MAX_ANGLE)
         {
             posVertical = VERTICAL_MAX_ANGLE;
@@ -204,6 +188,7 @@ void adjustServos(int deltaX, int deltaY) {
     else if (deltaY < -sensibilite)
     {
         posVertical--; // Diminue la position verticale
+        //posVertical = posVertical - 10;
         if (posVertical < VERTICAL_MIN_ANGLE)
         {
             posVertical = VERTICAL_MIN_ANGLE;
@@ -216,7 +201,8 @@ void adjustServos(int deltaX, int deltaY) {
     }
 }
 
-void trackSun() {
+void trackSun()
+{
 	// Read photo cell values
 	int photocell0 = ADC_getValue(PHOTOCELL_0);
 	int photocell1 = ADC_getValue(PHOTOCELL_1);
@@ -229,10 +215,21 @@ void trackSun() {
 
 	int average = (photocell0 + photocell1 + photocell2 + photocell3)/4;
 
-	snprintf("pc0:      %11.5lf,    pc2:   %11.5lf\n", photocell0, photocell2);
-	snprintf("pc1:   %11.5lf,    pc3:  %11.5lf\n", photocell1, photocell3);
+	//snprintf("pc0:      %11.5lf,    pc2:   %11.5lf\n", photocell0, photocell2);
+	//snprintf("pc1:   %11.5lf,    pc3:  %11.5lf\n", photocell1, photocell3);
 	// Adjust servos
 	adjustServos(deltX, deltY);
+
+	if (average < LIMITE_DARK_MODE)
+	{
+		currentState = DARK_MODE;
+	}
+}
+
+void darkMode()
+{
+	TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, HORIZONTAL_MIN_ANGLE);
+	TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, VERTICAL_MIN_ANGLE);
 }
 
 // Fonction principale de la machine à état
@@ -250,8 +247,12 @@ static void SUNBED_state_machine(void)
 		trackSun();
 		break;
 	  case DARK_MODE:
-
+		darkMode();
 	  	break;
+	  default:
+	  	printf("You must define the content for the case %d\n", currentState);
+	  	break;
+
 	}
 }
 
