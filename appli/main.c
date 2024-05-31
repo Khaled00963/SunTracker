@@ -4,7 +4,7 @@
   * @author  Khaled
   * @date    29-May-2024
   * @brief   Default main function.
-  ******************************************************************************
+  ******************************************************************************/
 
 /*
    ______               _                  _///_ _           _                   _
@@ -60,16 +60,47 @@
 		MESSAGE_THANKS
 	} message_id_e;
 
-
-// Function prototypes
+/**
+ * @brief Initialize the system
+ */
 void initialize();
+/**
+ * @brief Function for TFT display
+ */
 void ihm_tft();
+/**
+ * @brief Perform calibration routine and adjust servos to their starting positions
+ */
 void calibrate();
+/**
+ * @brief Track the sun using photo cell readings
+ */
 void trackSun();
+/**
+ * @brief Sweep the area between startAngle and endAngle with a specified delay
+ * @param startAngle Starting angle
+ * @param endAngle Ending angle
+ * @param stepDelay Delay between each step
+ */
 void sweepArea(int startAngle, int endAngle, int stepDelay);
+/**
+ * @brief State machine for the sunbed system
+ */
 static void SUNBED_state_machine(void);
+/**
+ * @brief Display a message on the TFT screen
+ * @param message_id The message ID to display
+ */
 static void SUNBED_display(message_id_e message_id);
+/**
+ * @brief Adjust the servo motors based on the given angles
+ * @param horizontalAngle Angle for the horizontal servo
+ * @param verticalAngle Angle for the vertical servo
+ */
 void adjustServos(int horizontalAngle, int verticalAngle);
+/**
+ * @brief Enter dark mode and set servos to minimum angles
+ */
 void darkMode(void);
 
 // Global variables
@@ -80,7 +111,10 @@ State currentState = INIT;
 uint16_t posHorizontal = 115; //min = 25, centre = 115, max = 220 // Initial horizontal angle
 uint16_t posVertical = 190;   //min= 130, centre = 190, max = 250 // Initial vertical angle
 
-
+/**
+ * @brief Main function
+ * @retval int
+ */
 int main(void)
 {
 	initialize();
@@ -98,19 +132,22 @@ int main(void)
 	}
 }
 
+/**
+ * @brief Initialize the hardware components
+ */
 void initialize()
 {
 	//Initialisation de la couche logicielle HAL (Hardware Abstraction Layer)
-	//Cette ligne doit rester la premiÃ¨re Ã©tape de la fonction main().
+	//Cette ligne doit rester la première étape de la fonction main().
 	HAL_Init();
 
 	ADC_init();
-	//Initialisation de l'UART2 Ã  la vitesse de 115200 bauds/secondes (92kbits/s) PA2 : Tx  | PA3 : Rx.
-	//Attention, les pins PA2 et PA3 ne sont pas reliÃ©es jusqu'au connecteur de la Nucleo.
-	//Ces broches sont redirigÃ©es vers la sonde de dÃ©bogage, la liaison UART Ã©tant ensuite encapsulÃ©e sur l'USB vers le PC de dÃ©veloppement.
-	UART_init(UART1_ID,115200);
+	//Initialisation de l'UART2 à la vitesse de 115200 bauds/secondes (92kbits/s) PA2 : Tx  | PA3 : Rx.
+	//Attention, les pins PA2 et PA3 ne sont pas reliées jusqu'au connecteur de la Nucleo.
+	//Ces broches sont redirigées vers la sonde de débogage, la liaison UART étant ensuite encapsulée sur l'USB vers le PC de développement.
+	//UART_init(UART1_ID,115200);
 
-	//"Indique que les printf sortent vers le pÃ©riphÃ©rique UART2."
+	//Indique que les printf sortent vers le périphérique UART2.
 	SYS_set_std_usart(UART1_ID, UART1_ID, UART1_ID);
 
 	//Initialisation du port de la led Verte (carte Nucleo)
@@ -125,7 +162,7 @@ void initialize()
 	TIMER_enable_PWM(TIMER1_ID, SERVO_HORIZONTAL, posHorizontal, FALSE, FALSE);
 	TIMER_enable_PWM(TIMER1_ID, SERVO_VERTICAL, posVertical, FALSE, FALSE);
 
-	// Mise Ã  jour du rapport cyclique.
+	// Mise à jour du rapport cyclique.
 	//TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, horizontalAngle);
 	//TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, verticalAngle);
 
@@ -135,6 +172,9 @@ void initialize()
 	currentState = CALIBRATE;
 }
 
+/**
+ * @brief Perform calibration routine and adjust servos to their starting positions
+ */
 void calibrate()
 {
 	// Perform calibration routine
@@ -143,7 +183,11 @@ void calibrate()
 	currentState = TRACK_SUN;
 }
 
-// Fonction pour ajuster les servos
+/**
+ * @brief Adjust the servo motors based on the given angles
+ * @param deltaX Angle for the horizontal servo
+ * @param deltaY Angle for the vertical servo
+ */
 void adjustServos(int deltaX, int deltaY)
 {
     int sensibilite = 500;
@@ -201,6 +245,9 @@ void adjustServos(int deltaX, int deltaY)
     }
 }
 
+/**
+ * @brief Track the sun using photo cell readings
+ */
 void trackSun()
 {
 	// Read photo cell values
@@ -226,13 +273,18 @@ void trackSun()
 	}
 }
 
+/**
+ * @brief Enter dark mode and set servos to minimum angles
+ */
 void darkMode()
 {
 	TIMER_set_duty(TIMER1_ID, SERVO_HORIZONTAL, HORIZONTAL_MIN_ANGLE);
 	TIMER_set_duty(TIMER1_ID, SERVO_VERTICAL, VERTICAL_MIN_ANGLE);
 }
 
-// Fonction principale de la machine à état
+/**
+ * @brief State machine for the sunbed system
+ */
 static void SUNBED_state_machine(void)
 {
 	switch(currentState)
@@ -252,10 +304,12 @@ static void SUNBED_state_machine(void)
 	  default:
 	  	printf("You must define the content for the case %d\n", currentState);
 	  	break;
-
 	}
 }
 
+/**
+ * @brief Function for TFT display
+ */
 void ihm_tft()
 {
 	//draw_full_circle();
@@ -268,7 +322,9 @@ void ihm_tft()
 	//draw_value(190, 210, photoresistor_value_4);
 }
 
-// Initialisation de l'écran TFT
+/**
+ * @brief Initialize the TFT screen
+ */
 void init_screen()
 {
 	ILI9341_Init();
@@ -280,7 +336,10 @@ void init_screen()
 //draw_value(int x, int y, int value);
 //ILI9341_DrawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
 
-
+/**
+ * @brief Display a message on the TFT screen
+ * @param message_id The message ID to display
+ */
 void SUNBED_display(message_id_e message_id)
 {
 	switch(message_id)
@@ -293,7 +352,6 @@ void SUNBED_display(message_id_e message_id)
 			break;
 		case MESSAGE_PARAMETERS:
 			// TODO
-
 			break;
 		case MESSAGE_THANKS:
 			printf("Bye bye ...");
